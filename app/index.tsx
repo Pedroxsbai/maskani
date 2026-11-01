@@ -1,58 +1,69 @@
+import { MaskaniLogo } from '@/components/maskani-logo';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Icon } from '@/components/ui/icon';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Text } from '@/components/ui/text';
-import { Link, Stack } from 'expo-router';
-import { MoonStarIcon, StarIcon, SunIcon } from 'lucide-react-native';
+import { Stack } from 'expo-router';
+import { ArrowRightIcon, MoonStarIcon, SunIcon } from 'lucide-react-native';
 import { useColorScheme } from 'nativewind';
 import * as React from 'react';
-import { Image, type ImageStyle, View } from 'react-native';
-
-const LOGO = {
-  light: require('@/assets/images/react-native-reusables-light.png'),
-  dark: require('@/assets/images/react-native-reusables-dark.png'),
-};
+import { ScrollView, View } from 'react-native';
 
 const SCREEN_OPTIONS = {
-  title: 'React Native Reusables',
-  headerTransparent: true,
+  title: 'Aperçu du thème',
   headerRight: () => <ThemeToggle />,
 };
 
-const IMAGE_STYLE: ImageStyle = {
-  height: 76,
-  width: 76,
-};
-
-export default function Screen() {
-  const { colorScheme } = useColorScheme();
+export default function ThemePreviewScreen() {
+  const [acceptsTerms, setAcceptsTerms] = React.useState(false);
 
   return (
     <>
       <Stack.Screen options={SCREEN_OPTIONS} />
-      <View className="flex-1 items-center justify-center gap-8 p-4">
-        <Image source={LOGO[colorScheme ?? 'light']} style={IMAGE_STYLE} resizeMode="contain" />
-        <View className="gap-2 p-4">
-          <Text className="ios:text-foreground font-mono text-sm text-muted-foreground">
-            1. Edit <Text variant="code">app/index.tsx</Text> to get started.
-          </Text>
-          <Text className="ios:text-foreground font-mono text-sm text-muted-foreground">
-            2. Save to see your changes instantly.
+      <ScrollView
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerClassName="flex-grow justify-center gap-8 p-6"
+        className="bg-background">
+        <View className="items-center gap-4">
+          <MaskaniLogo variant="mark" width={140} />
+          <MaskaniLogo width={220} />
+          <Text variant="h3" className="text-center">
+            Trouvez votre chez-vous au Maroc
           </Text>
         </View>
-        <View className="flex-row gap-2">
-          <Link href="https://reactnativereusables.com" asChild>
-            <Button>
-              <Text>Browse the Docs</Text>
-            </Button>
-          </Link>
-          <Link href="https://github.com/founded-labs/react-native-reusables" asChild>
-            <Button variant="ghost">
-              <Text>Star the Repo</Text>
-              <Icon as={StarIcon} />
-            </Button>
-          </Link>
+
+        <View className="gap-3">
+          <Button size="lg">
+            <Text>S'inscrire</Text>
+            <Icon as={ArrowRightIcon} />
+          </Button>
+          <Button size="lg" variant="secondary">
+            <Text>Se connecter</Text>
+          </Button>
+          <Button variant="link">
+            <Text>Explorer sans compte</Text>
+          </Button>
         </View>
-      </View>
+
+        <View className="gap-2">
+          <Label nativeID="email">Adresse e-mail</Label>
+          <Input
+            aria-labelledby="email"
+            placeholder="votre@email.com"
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
+
+        <View className="flex-row items-center gap-3">
+          <Checkbox checked={acceptsTerms} onCheckedChange={setAcceptsTerms} aria-labelledby="terms" />
+          <Label nativeID="terms" onPress={() => setAcceptsTerms(!acceptsTerms)}>
+            J'accepte les conditions d'utilisation
+          </Label>
+        </View>
+      </ScrollView>
     </>
   );
 }

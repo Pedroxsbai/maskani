@@ -1,73 +1,75 @@
-# Minimal Template
+# MASKANI
 
-This is a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
+Application mobile de location immobilière longue durée au Maroc (maisons et appartements).
+Projet réalisé en équipe de quatre personnes, en suivant le plan de livraison `MASKANI_Task_Plan.pdf`.
 
-It was initialized using the following command, then the `Minimal (Nativewind)` template was selected when prompted:
+## Stack technique
 
-```bash
-npx @react-native-reusables/cli@latest init
-```
+| Outil | Rôle |
+| --- | --- |
+| [Expo](https://docs.expo.dev/) (SDK 58) + [React Native](https://reactnative.dev/) | Application mobile Android / iOS / web |
+| TypeScript (mode `strict`) | Typage du code |
+| [Expo Router](https://docs.expo.dev/router/introduction/) | Navigation basée sur les fichiers du dossier `app/` |
+| [NativeWind](https://www.nativewind.dev/) | Style avec des classes Tailwind |
+| [React Native Reusables](https://reactnativereusables.com) | Composants UI de base (`components/ui/`) |
 
-## Getting Started
+Backend et base de données : choix d'équipe à venir (Turn 01, étape 6).
 
-To run the development server:
+## Installation
 
-```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    # or
-    bun dev
-```
-
-This will start the Expo Dev Server. Open the app in:
-
-- **iOS**: press `i` to launch in the iOS simulator _(Mac only)_
-- **Android**: press `a` to launch in the Android emulator
-- **Web**: press `w` to run in a browser
-
-You can also scan the QR code using the [Expo Go](https://expo.dev/go) app on your device. This project fully supports running in Expo Go for quick testing on physical devices.
-
-## Adding components
-
-You can add more reusable components using the CLI:
+Prérequis : une version LTS récente de Node.js (projet testé avec Node 24), et l'application **Expo Go** sur le téléphone.
 
 ```bash
-npx react-native-reusables/cli@latest add [...components]
+git clone https://github.com/Pedroxsbai/maskani.git
+cd maskani
+npm install
+npm run dev
 ```
 
-> e.g. `npx react-native-reusables/cli@latest add input textarea`
+Scanner le QR code affiché avec Expo Go (Android) ou l'appareil photo (iOS). Le téléphone et le PC doivent être sur le même réseau Wi-Fi ; sinon, utiliser `npx expo start --tunnel`.
 
-If you don't specify any component names, you'll be prompted to select which components to add interactively. Use the `--all` flag to install all available components at once.
+## Scripts
 
-## Project Features
+| Commande | Effet |
+| --- | --- |
+| `npm run dev` | Démarre le serveur Expo en vidant le cache |
+| `npm run android` / `npm run ios` / `npm run web` | Démarre et ouvre directement la plateforme choisie |
+| `npm run typecheck` | Vérifie les types TypeScript sans lancer l'application |
 
-- ⚛️ Built with [Expo Router](https://expo.dev/router)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Nativewind](https://www.nativewind.dev/)
-- 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
-- 🚀 New Architecture enabled
-- 🔥 Edge to Edge enabled
-- 📱 Runs on iOS, Android, and Web
+## Variables d'environnement
 
-## Learn More
+Aucune pour le moment. Elles seront listées ici, avec un fichier `.env.example`, lors de la configuration du backend.
+Les vrais fichiers `.env` ne doivent jamais être commités (ils sont ignorés par `.gitignore`).
 
-To dive deeper into the technologies used:
+## Structure du projet
 
-- [React Native Docs](https://reactnative.dev/docs/getting-started)
-- [Expo Docs](https://docs.expo.dev/)
-- [Nativewind Docs](https://www.nativewind.dev/)
-- [React Native Reusables](https://reactnativereusables.com)
+```
+app/                  Écrans : chaque fichier devient une route (Expo Router)
+  _layout.tsx         Cadre commun : thème, pile de navigation
+  index.tsx           Route "/"
+  +not-found.tsx      Écran affiché pour une route inconnue
+components/
+  ui/                 Composants de base React Native Reusables (Button, Text, Icon…)
+lib/                  Code partagé sans interface : thème, utilitaires
+assets/images/        Logos, icône, splash screen
+global.css            Variables de couleur (mode clair et sombre)
+```
 
-## Deploy with EAS
+Dossiers ajoutés au fur et à mesure du Turn 01 :
 
-The easiest way to deploy your app is with [Expo Application Services (EAS)](https://expo.dev/eas).
+| Dossier | Contenu | Étape |
+| --- | --- | --- |
+| `app/(auth)/` | Bienvenue, connexion, inscription | 4 et 7 |
+| `app/(tabs)/` | Barre d'onglets : Explorer, Favoris, Messages, Visites, Profil | 4 |
+| `components/` | Composants propres à MASKANI, construits à partir de `components/ui/` | 3 |
+| `types/` | Contrats de données : User, Listing, Favourite, Visit, Conversation, Message, Report | 5 |
+| `lib/` | Client du backend et services d'authentification | 6 et 8 |
+| `providers/` | Fournisseur de session partagé dans toute l'application | 9 |
 
-- [EAS Build](https://docs.expo.dev/build/introduction/)
-- [EAS Updates](https://docs.expo.dev/eas-update/introduction/)
-- [EAS Submit](https://docs.expo.dev/submit/introduction/)
+## Conventions
 
----
-
-If you enjoy using React Native Reusables, please consider giving it a ⭐ on [GitHub](https://github.com/founded-labs/react-native-reusables). Your support means a lot!
+- Noms de variables, fonctions et fichiers en anglais ; interface utilisateur en français.
+- Fichiers en `kebab-case` (`sign-in.tsx`), composants en `PascalCase` (`SignInForm`).
+- Imports avec l'alias `@/` depuis la racine : `import { Button } from '@/components/ui/button'`.
+- Ajouter un composant Reusables : `npx @react-native-reusables/cli@latest add <nom>`.
+- Avant chaque commit : `npm run typecheck`.
