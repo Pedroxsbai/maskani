@@ -12,8 +12,7 @@ Projet réalisé en équipe de quatre personnes, en suivant le plan de livraison
 | [Expo Router](https://docs.expo.dev/router/introduction/) | Navigation basée sur les fichiers du dossier `app/` |
 | [NativeWind](https://www.nativewind.dev/) | Style avec des classes Tailwind |
 | [React Native Reusables](https://reactnativereusables.com) | Composants UI de base (`components/ui/`) |
-
-Backend et base de données : choix d'équipe à venir (Turn 01, étape 6).
+| [Supabase](https://supabase.com/docs) | Backend : base PostgreSQL, authentification, stockage, règles d'accès (RLS) |
 
 ## Installation
 
@@ -23,8 +22,11 @@ Prérequis : une version LTS récente de Node.js (projet testé avec Node 24), e
 git clone https://github.com/Pedroxsbai/maskani.git
 cd maskani
 npm install
+cp .env.example .env
 npm run dev
 ```
+
+Avant `npm run dev`, remplir `.env` avec les valeurs du projet Supabase de l'équipe (voir « Variables d'environnement »). Sous PowerShell, remplacer `cp` par `Copy-Item`.
 
 Scanner le QR code affiché avec Expo Go (Android) ou l'appareil photo (iOS). Le téléphone et le PC doivent être sur le même réseau Wi-Fi ; sinon, utiliser `npx expo start --tunnel`.
 
@@ -38,8 +40,23 @@ Scanner le QR code affiché avec Expo Go (Android) ou l'appareil photo (iOS). Le
 
 ## Variables d'environnement
 
-Aucune pour le moment. Elles seront listées ici, avec un fichier `.env.example`, lors de la configuration du backend.
+| Variable | Où la trouver |
+| --- | --- |
+| `EXPO_PUBLIC_SUPABASE_URL` | Tableau de bord Supabase > Project Settings > API Keys (URL du projet) |
+| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Même page : clé *publishable* (`sb_publishable_...`) |
+
+Les variables préfixées par `EXPO_PUBLIC_` sont intégrées à l'application : n'y mettre que des valeurs publiques.
+La clé secrète (`sb_secret_...` ou `service_role`) ne doit jamais apparaître dans l'application ni dans Git.
 Les vrais fichiers `.env` ne doivent jamais être commités (ils sont ignorés par `.gitignore`).
+
+## Base de données
+
+Les migrations SQL sont dans `supabase/migrations/`, à appliquer dans l'ordre de leur nom.
+Pour chaque fichier : tableau de bord Supabase > SQL Editor > coller le contenu > Run.
+
+| Migration | Contenu |
+| --- | --- |
+| `20261103000000_create_profiles.sql` | Table `profiles` (contrat `User`), règles d'accès, création automatique du profil à l'inscription |
 
 ## Structure du projet
 
@@ -50,7 +67,9 @@ app/                  Écrans : chaque fichier devient une route (Expo Router)
   +not-found.tsx      Écran affiché pour une route inconnue
 components/
   ui/                 Composants de base React Native Reusables (Button, Text, Icon…)
-lib/                  Code partagé sans interface : thème, utilitaires
+lib/                  Code partagé sans interface : thème, utilitaires, client Supabase
+types/                Contrats de données partagés par toute l'équipe
+supabase/migrations/  Scripts SQL de la base de données
 assets/images/        Logos, icône, splash screen
 global.css            Variables de couleur (mode clair et sombre)
 ```
