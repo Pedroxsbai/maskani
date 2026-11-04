@@ -52,5 +52,10 @@ async function signUp({ fullName, email, phone, password }: SignUpInput): Promis
   return { ok: true };
 }
 
-export { signIn, signUp };
+async function signOut(): Promise<AuthResult> {
+  const { error } = await supabase.auth.signOut();
+  return error ? toFailure(error) : { ok: true };
+}
+
+export { signIn, signOut, signUp };
 export type { AuthResult, SignUpInput };
