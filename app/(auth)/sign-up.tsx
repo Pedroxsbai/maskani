@@ -1,4 +1,5 @@
 import { AuthHeader } from '@/components/auth-header';
+import { FormAlert } from '@/components/form-alert';
 import { PasswordField } from '@/components/password-field';
 import { TextField } from '@/components/text-field';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Icon } from '@/components/ui/icon';
 import { Label } from '@/components/ui/label';
 import { Text } from '@/components/ui/text';
-import { type FormErrors, type SignUpValues, validateSignUp } from '@/lib/auth-validation';
-import { Link } from 'expo-router';
+import { signUp } from '@/lib/auth';
+import { type FormErrors, hasErrors, type SignUpValues, validateSignUp } from '@/lib/auth-validation';
+import { Link, router } from 'expo-router';
 import { ArrowRightIcon, MailIcon, UserIcon } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View } from 'react-native';
@@ -19,9 +21,30 @@ export default function SignUpScreen() {
   const [password, setPassword] = React.useState('');
   const [acceptsTerms, setAcceptsTerms] = React.useState(false);
   const [errors, setErrors] = React.useState<FormErrors<SignUpValues>>({});
+  const [formError, setFormError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  function handleSubmit() {
-    setErrors(validateSignUp({ fullName, email, phone, password, acceptsTerms }));
+  async function handleSubmit() {
+    if (isSubmitting) {
+      return;
+    }
+
+    const validationErrors = validateSignUp({ fullName, email, phone, password, acceptsTerms });
+    setErrors(validationErrors);
+    setFormError(null);
+    if (hasErrors(validationErrors)) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    const result = await signUp({ fullName, email, phone, password });
+    setIsSubmitting(false);
+
+    if (!result.ok) {
+      setFormError(result.message);
+      return;
+    }
+    router.replace('/explore');
   }
 
   return (
@@ -94,9 +117,11 @@ export default function SignUpScreen() {
         </View>
       </View>
 
-      <Button size="lg" onPress={handleSubmit}>
-        <Text>Créer mon compte</Text>
-        <Icon as={ArrowRightIcon} />
+      {formError ? <FormAlert message={formError} /> : null}
+
+      <Button size="lg" onPress={handleSubmit} disabled={isSubmitting}>
+        <Text>{isSubmitting ? 'Création du compte…' : 'Créer mon compte'}</Text>
+        {isSubmitting ? null : <Icon as={ArrowRightIcon} />}
       </Button>
 
       <View className="flex-row items-center justify-center">

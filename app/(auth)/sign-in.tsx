@@ -1,11 +1,13 @@
 import { AuthHeader } from '@/components/auth-header';
+import { FormAlert } from '@/components/form-alert';
 import { PasswordField } from '@/components/password-field';
 import { TextField } from '@/components/text-field';
 import { Button } from '@/components/ui/button';
 import { Icon } from '@/components/ui/icon';
 import { Text } from '@/components/ui/text';
-import { type FormErrors, type SignInValues, validateSignIn } from '@/lib/auth-validation';
-import { Link } from 'expo-router';
+import { signIn } from '@/lib/auth';
+import { type FormErrors, hasErrors, type SignInValues, validateSignIn } from '@/lib/auth-validation';
+import { Link, router } from 'expo-router';
 import { ArrowRightIcon, MailIcon } from 'lucide-react-native';
 import * as React from 'react';
 import { ScrollView, View } from 'react-native';
@@ -14,9 +16,30 @@ export default function SignInScreen() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [errors, setErrors] = React.useState<FormErrors<SignInValues>>({});
+  const [formError, setFormError] = React.useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  function handleSubmit() {
-    setErrors(validateSignIn({ email, password }));
+  async function handleSubmit() {
+    if (isSubmitting) {
+      return;
+    }
+
+    const validationErrors = validateSignIn({ email, password });
+    setErrors(validationErrors);
+    setFormError(null);
+    if (hasErrors(validationErrors)) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    const result = await signIn({ email, password });
+    setIsSubmitting(false);
+
+    if (!result.ok) {
+      setFormError(result.message);
+      return;
+    }
+    router.replace('/explore');
   }
 
   return (
@@ -54,9 +77,11 @@ export default function SignInScreen() {
         />
       </View>
 
-      <Button size="lg" onPress={handleSubmit}>
-        <Text>Se connecter</Text>
-        <Icon as={ArrowRightIcon} />
+      {formError ? <FormAlert message={formError} /> : null}
+
+      <Button size="lg" onPress={handleSubmit} disabled={isSubmitting}>
+        <Text>{isSubmitting ? 'Connexion…' : 'Se connecter'}</Text>
+        {isSubmitting ? null : <Icon as={ArrowRightIcon} />}
       </Button>
 
       <View className="flex-row items-center justify-center">
