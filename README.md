@@ -30,6 +30,8 @@ Avant `npm run dev`, remplir `.env` avec les valeurs du projet Supabase de l'éq
 
 Scanner le QR code affiché avec Expo Go (Android) ou l'appareil photo (iOS). Le téléphone et le PC doivent être sur le même réseau Wi-Fi ; sinon, utiliser `npx expo start --tunnel`.
 
+Sur un checkout neuf, lancer `npm run dev` au moins une fois avant `npm run typecheck` : Expo génère alors `expo-env.d.ts` et les types de routes (`.expo/types/`), ignorés par Git. Sans eux, TypeScript signale `Cannot find module ... '@/global.css'`.
+
 ## Scripts
 
 | Commande | Effet |
@@ -58,32 +60,61 @@ Pour chaque fichier : tableau de bord Supabase > SQL Editor > coller le contenu 
 | --- | --- |
 | `20261103000000_create_profiles.sql` | Table `profiles` (contrat `User`), règles d'accès, création automatique du profil à l'inscription |
 
+### Vérifier les règles d'accès
+
+`supabase/checks/profiles_rls.sql` vérifie qu'un utilisateur connecté ne lit que son profil, ne modifie pas celui des autres ni son propre rôle, et qu'un visiteur ne lit aucun profil.
+Le lancer dans le SQL Editor une fois au moins deux comptes créés. Il ne modifie aucune donnée (transaction annulée). Résultat attendu : `All profiles access checks passed`.
+
+### Réglages Supabase Auth (Authentication > Sign In / Providers > Email)
+
+| Réglage | Valeur en développement |
+| --- | --- |
+| Confirm email | Désactivé (à réactiver avant la livraison finale) |
+| Minimum password length | 8 |
+
 ## Structure du projet
 
 ```
-app/                  Écrans : chaque fichier devient une route (Expo Router)
-  _layout.tsx         Cadre commun : thème, pile de navigation
-  index.tsx           Route "/"
-  +not-found.tsx      Écran affiché pour une route inconnue
+app/
+  _layout.tsx           Cadre commun : session, thème, pile de navigation
+  index.tsx             Redirige vers /explore si connecté, sinon vers /welcome
+  +not-found.tsx        Écran affiché pour une route inconnue
+  (auth)/               Bienvenue, connexion, inscription (pile)
+  (tabs)/               Explorer, Favoris, Messages, Visites, Profil (onglets)
 components/
-  ui/                 Composants de base React Native Reusables (Button, Text, Icon…)
-lib/                  Code partagé sans interface : thème, utilitaires, client Supabase
-types/                Contrats de données partagés par toute l'équipe
-supabase/migrations/  Scripts SQL de la base de données
-assets/images/        Logos, icône, splash screen
-global.css            Variables de couleur (mode clair et sombre)
+  ui/                   Composants de base React Native Reusables (Button, Input, Checkbox…)
+  *.tsx                 Composants MASKANI : logo, champs de formulaire, états vides…
+lib/
+  supabase.ts           Le seul client Supabase de l'application
+  auth.ts               Inscription, connexion, déconnexion
+  auth-validation.ts    Règles de validation des formulaires
+  theme.ts, utils.ts    Couleurs pour la navigation, fusion de classes
+providers/
+  session-provider.tsx  Session partagée : useSession()
+types/                  Contrats de données partagés par toute l'équipe
+supabase/
+  migrations/           Scripts SQL de la base, à appliquer dans l'ordre
+  checks/               Vérifications SQL répétables
+assets/images/          Logos, icône, splash screen
+global.css              Variables de couleur (mode clair et sombre)
 ```
 
-Dossiers ajoutés au fur et à mesure du Turn 01 :
+## Authentification et session
 
-| Dossier | Contenu | Étape |
-| --- | --- | --- |
-| `app/(auth)/` | Bienvenue, connexion, inscription | 4 et 7 |
-| `app/(tabs)/` | Barre d'onglets : Explorer, Favoris, Messages, Visites, Profil | 4 |
-| `components/` | Composants propres à MASKANI, construits à partir de `components/ui/` | 3 |
-| `types/` | Contrats de données : User, Listing, Favourite, Visit, Conversation, Message, Report | 5 |
-| `lib/` | Client du backend et services d'authentification | 6 et 8 |
-| `providers/` | Fournisseur de session partagé dans toute l'application | 9 |
+- Utiliser la session dans un écran : `const { session } = useSession();` (`null` si visiteur).
+- Appeler Supabase uniquement via `lib/` ; les écrans n'importent pas `supabase` pour l'authentification.
+- Les visiteurs peuvent parcourir les onglets sans compte ; les actions personnelles (favoris, visites, messages) devront vérifier `session` et les règles RLS côté base.
+
+## État du Turn 01 (Personne 1)
+
+Fait : thème MASKANI, composants communs, navigation `(auth)` + `(tabs)`, contrats de données, Supabase, inscription, connexion, déconnexion, session persistante.
+
+Limites connues, prévues dans le plan :
+
+- Réinitialisation du mot de passe, sessions expirées et comptes suspendus : Turn 09.
+- Écran Profil complet (photo, modification, mode propriétaire) : Turn 04.
+- Les tables autres que `profiles` sont à créer par chaque Turn à partir des contrats de `types/`.
+- La version web n'est pas une cible : son rendu statique n'a pas été validé.
 
 ## Conventions
 
