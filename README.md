@@ -1,73 +1,125 @@
-# Minimal Template
+# MASKANI
 
-This is a [React Native](https://reactnative.dev/) project built with [Expo](https://expo.dev/) and [React Native Reusables](https://reactnativereusables.com).
+Application mobile de location immobilière longue durée au Maroc (maisons et appartements).
+Projet réalisé en équipe de quatre personnes, en suivant le plan de livraison `MASKANI_Task_Plan.pdf`.
 
-It was initialized using the following command, then the `Minimal (Nativewind)` template was selected when prompted:
+## Stack technique
 
-```bash
-npx @react-native-reusables/cli@latest init
-```
+| Outil | Rôle |
+| --- | --- |
+| [Expo](https://docs.expo.dev/) (SDK 58) + [React Native](https://reactnative.dev/) | Application mobile Android / iOS / web |
+| TypeScript (mode `strict`) | Typage du code |
+| [Expo Router](https://docs.expo.dev/router/introduction/) | Navigation basée sur les fichiers du dossier `app/` |
+| [NativeWind](https://www.nativewind.dev/) | Style avec des classes Tailwind |
+| [React Native Reusables](https://reactnativereusables.com) | Composants UI de base (`components/ui/`) |
+| [Supabase](https://supabase.com/docs) | Backend : base PostgreSQL, authentification, stockage, règles d'accès (RLS) |
 
-## Getting Started
+## Installation
 
-To run the development server:
-
-```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    # or
-    bun dev
-```
-
-This will start the Expo Dev Server. Open the app in:
-
-- **iOS**: press `i` to launch in the iOS simulator _(Mac only)_
-- **Android**: press `a` to launch in the Android emulator
-- **Web**: press `w` to run in a browser
-
-You can also scan the QR code using the [Expo Go](https://expo.dev/go) app on your device. This project fully supports running in Expo Go for quick testing on physical devices.
-
-## Adding components
-
-You can add more reusable components using the CLI:
+Prérequis : une version LTS récente de Node.js (projet testé avec Node 24), et l'application **Expo Go** sur le téléphone.
 
 ```bash
-npx react-native-reusables/cli@latest add [...components]
+git clone https://github.com/Pedroxsbai/maskani.git
+cd maskani
+npm install
+cp .env.example .env
+npm run dev
 ```
 
-> e.g. `npx react-native-reusables/cli@latest add input textarea`
+Avant `npm run dev`, remplir `.env` avec les valeurs du projet Supabase de l'équipe (voir « Variables d'environnement »). Sous PowerShell, remplacer `cp` par `Copy-Item`.
 
-If you don't specify any component names, you'll be prompted to select which components to add interactively. Use the `--all` flag to install all available components at once.
+Scanner le QR code affiché avec Expo Go (Android) ou l'appareil photo (iOS). Le téléphone et le PC doivent être sur le même réseau Wi-Fi ; sinon, utiliser `npx expo start --tunnel`.
 
-## Project Features
+Sur un checkout neuf, lancer `npm run dev` au moins une fois avant `npm run typecheck` : Expo génère alors `expo-env.d.ts` et les types de routes (`.expo/types/`), ignorés par Git. Sans eux, TypeScript signale `Cannot find module ... '@/global.css'`.
 
-- ⚛️ Built with [Expo Router](https://expo.dev/router)
-- 🎨 Styled with [Tailwind CSS](https://tailwindcss.com/) via [Nativewind](https://www.nativewind.dev/)
-- 📦 UI powered by [React Native Reusables](https://github.com/founded-labs/react-native-reusables)
-- 🚀 New Architecture enabled
-- 🔥 Edge to Edge enabled
-- 📱 Runs on iOS, Android, and Web
+## Scripts
 
-## Learn More
+| Commande | Effet |
+| --- | --- |
+| `npm run dev` | Démarre le serveur Expo en vidant le cache |
+| `npm run android` / `npm run ios` / `npm run web` | Démarre et ouvre directement la plateforme choisie |
+| `npm run typecheck` | Vérifie les types TypeScript sans lancer l'application |
 
-To dive deeper into the technologies used:
+## Variables d'environnement
 
-- [React Native Docs](https://reactnative.dev/docs/getting-started)
-- [Expo Docs](https://docs.expo.dev/)
-- [Nativewind Docs](https://www.nativewind.dev/)
-- [React Native Reusables](https://reactnativereusables.com)
+| Variable | Où la trouver |
+| --- | --- |
+| `EXPO_PUBLIC_SUPABASE_URL` | Tableau de bord Supabase > Project Settings > API Keys (URL du projet) |
+| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Même page : clé *publishable* (`sb_publishable_...`) |
 
-## Deploy with EAS
+Les variables préfixées par `EXPO_PUBLIC_` sont intégrées à l'application : n'y mettre que des valeurs publiques.
+La clé secrète (`sb_secret_...` ou `service_role`) ne doit jamais apparaître dans l'application ni dans Git.
+Les vrais fichiers `.env` ne doivent jamais être commités (ils sont ignorés par `.gitignore`).
 
-The easiest way to deploy your app is with [Expo Application Services (EAS)](https://expo.dev/eas).
+## Base de données
 
-- [EAS Build](https://docs.expo.dev/build/introduction/)
-- [EAS Updates](https://docs.expo.dev/eas-update/introduction/)
-- [EAS Submit](https://docs.expo.dev/submit/introduction/)
+Les migrations SQL sont dans `supabase/migrations/`, à appliquer dans l'ordre de leur nom.
+Pour chaque fichier : tableau de bord Supabase > SQL Editor > coller le contenu > Run.
 
----
+| Migration | Contenu |
+| --- | --- |
+| `20261103000000_create_profiles.sql` | Table `profiles` (contrat `User`), règles d'accès, création automatique du profil à l'inscription |
 
-If you enjoy using React Native Reusables, please consider giving it a ⭐ on [GitHub](https://github.com/founded-labs/react-native-reusables). Your support means a lot!
+### Vérifier les règles d'accès
+
+`supabase/checks/profiles_rls.sql` vérifie qu'un utilisateur connecté ne lit que son profil, ne modifie pas celui des autres ni son propre rôle, et qu'un visiteur ne lit aucun profil.
+Le lancer dans le SQL Editor une fois au moins deux comptes créés. Il ne modifie aucune donnée (transaction annulée). Résultat attendu : `All profiles access checks passed`.
+
+### Réglages Supabase Auth (Authentication > Sign In / Providers > Email)
+
+| Réglage | Valeur en développement |
+| --- | --- |
+| Confirm email | Désactivé (à réactiver avant la livraison finale) |
+| Minimum password length | 8 |
+
+## Structure du projet
+
+```
+app/
+  _layout.tsx           Cadre commun : session, thème, pile de navigation
+  index.tsx             Redirige vers /explore si connecté, sinon vers /welcome
+  +not-found.tsx        Écran affiché pour une route inconnue
+  (auth)/               Bienvenue, connexion, inscription (pile)
+  (tabs)/               Explorer, Favoris, Messages, Visites, Profil (onglets)
+components/
+  ui/                   Composants de base React Native Reusables (Button, Input, Checkbox…)
+  *.tsx                 Composants MASKANI : logo, champs de formulaire, états vides…
+lib/
+  supabase.ts           Le seul client Supabase de l'application
+  auth.ts               Inscription, connexion, déconnexion
+  auth-validation.ts    Règles de validation des formulaires
+  theme.ts, utils.ts    Couleurs pour la navigation, fusion de classes
+providers/
+  session-provider.tsx  Session partagée : useSession()
+types/                  Contrats de données partagés par toute l'équipe
+supabase/
+  migrations/           Scripts SQL de la base, à appliquer dans l'ordre
+  checks/               Vérifications SQL répétables
+assets/images/          Logos, icône, splash screen
+global.css              Variables de couleur (mode clair et sombre)
+```
+
+## Authentification et session
+
+- Utiliser la session dans un écran : `const { session } = useSession();` (`null` si visiteur).
+- Appeler Supabase uniquement via `lib/` ; les écrans n'importent pas `supabase` pour l'authentification.
+- Les visiteurs peuvent parcourir les onglets sans compte ; les actions personnelles (favoris, visites, messages) devront vérifier `session` et les règles RLS côté base.
+
+## État du Turn 01 (Personne 1)
+
+Fait : thème MASKANI, composants communs, navigation `(auth)` + `(tabs)`, contrats de données, Supabase, inscription, connexion, déconnexion, session persistante.
+
+Limites connues, prévues dans le plan :
+
+- Réinitialisation du mot de passe, sessions expirées et comptes suspendus : Turn 09.
+- Écran Profil complet (photo, modification, mode propriétaire) : Turn 04.
+- Les tables autres que `profiles` sont à créer par chaque Turn à partir des contrats de `types/`.
+- La version web n'est pas une cible : son rendu statique n'a pas été validé.
+
+## Conventions
+
+- Noms de variables, fonctions et fichiers en anglais ; interface utilisateur en français.
+- Fichiers en `kebab-case` (`sign-in.tsx`), composants en `PascalCase` (`SignInForm`).
+- Imports avec l'alias `@/` depuis la racine : `import { Button } from '@/components/ui/button'`.
+- Ajouter un composant Reusables : `npx @react-native-reusables/cli@latest add <nom>`.
+- Avant chaque commit : `npm run typecheck`.
